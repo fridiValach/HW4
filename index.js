@@ -61,14 +61,26 @@ postFunc("credit")
 postFunc("Active")
 
 async function depositFunc(req, res, next){
-    new ActionSchema()
+    new ActionSchema({...req.body,actionType:"deposit"})
     next()
 }
 app.post(
     "/api/actions/:id/deposit",
-    saveAccount,
+    depositFunc,
     (req, res) => {
       res.send(`id ${req.params.id} deposited succsesfully`);
+    }
+  );
+
+  async function withdrawFunc(req, res, next){
+    new ActionSchema({...req.body,actionType:"withdraw"})
+    next()
+}
+app.post(
+    "/api/actions/:id/withdraw",
+    withdrawFunc,
+    (req, res) => {
+      res.send(`id ${req.params.id} withdrawed succsesfully`);
     }
   );
 console.log(mongoose.connection.readyState);
