@@ -1,5 +1,7 @@
 const mongoose = require("mongoose");
-mongoose.connect("mongodb+srv://HW4mongo:HW4mongo@cluster0.w5jwo.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
+mongoose.connect(
+  "mongodb+srv://newHW4:newHW4@cluster0.amuqt.mongodb.net/?retryWrites=true&w=majority"
+);
 
 const express = require("express");
 const app = express();
@@ -7,82 +9,91 @@ const app = express();
 const AccountSchema = require("./AccountSchema");
 const ActionSchema = require("./ActionSchema");
 
-const PORT= 5555;
+const PORT = 5555;
 
 app.use(express.json());
 
-
-async function findAccounts(typeSchema,req, res, id){
-    await res.send(typeSchema.find(id));
-
+async function findAccounts(typeSchema, req, res, id) {
+  const accountsList=await typeSchema.find(id)
+  let htmlTag=""
+  accountsList.forEach(element => {
+      let list=``
+      Object.entries(element).forEach(entry=>{
+        list+=`<li>${entry}</li>`
+      })
+  });
+    res.send(accountsList);
 }
 
-app.get("/api/accounts",(req, res)=>{findAccounts(AccountSchema,req, res,"")});
+app.get("/api/accounts", (req, res) => {
+    findAccounts(AccountSchema, req, res, {})
+});
 
-async function saveAccount(req, res, next){
-    const newAccount=new AccountSchema(req.body)
-    console.log(newAccount);
-    await newAccount.save()
-    next();}
-
-app.post(
-  "/api/accounts",
-  saveAccount,
-  (req, res) => {
-    const newAccount = req.body;
-    res.send(`id ${newAccount.id} added succsesfully`);
-  }
-);
-
-app.get("/api/accounts/:id",(req, res)=>{findAccounts(req, res,req.params.id)});
-
-app.get("/api/actions",(req, res)=>{findAccounts(ActionSchema,req, res,req.params.id)});
-
-async function updateAccount (req, res,next, id, key, newValue){
-    const currentAccount=await AccountSchema.findOneAndUpdate({id:id}, {key:newValue})
-    next()
-
-}
-function postFunc(rout){
-    app.post(
-        "/api/accounts/:id/"+rout,
-        (req, res, next)=>{
-            const key=""
-            rout==="credit"?key=credit:key=isActive
-            updateAccount(req, res, next, req.params.id,key,req.body.credit)
-        },
-        (req, res) => {
-          res.send(`id ${req.params.id} updated succsesfully`);
-        }
-      );
+async function saveAccount(req, res, next) {
+  const newAccount = new AccountSchema(req.body);
+  console.log(newAccount);
+  await newAccount.save();
+  next();
 }
 
-postFunc("credit")
-postFunc("Active")
+app.post("/api/accounts", saveAccount, (req, res) => {
+  const newAccount = req.body;
+  res.send(`id ${newAccount.id} added succsesfully`);
+});
 
-async function depositFunc(req, res, next){
-    new ActionSchema({...req.body,actionType:"deposit"})
-    next()
+app.get("/api/accounts/:id", (req, res) => {
+  const newAccount = new AccountSchema(req.body);
+  findAccounts(AccountSchema, req, res, {id:req.params.id});
+});
+
+app.get("/api/actions", (req, res) => {
+  findAccounts(ActionSchema, req, res, {});
+});
+
+async function updateAccount(req, res, next, id, key, newValue) {
+     await AccountSchema.findOneAndUpdate(
+    { id: id },
+    { [key]: newValue }
+  );
+  next();
 }
-app.post(
-    "/api/actions/:id/deposit",
-    depositFunc,
+function postFunc(rout) {
+  app.post(
+    "/api/accounts/:id/" + rout,
+    (req, res, next) => {
+      const key = "";
+      rout === "credit" ? (key = credit) : (key = isActive);
+      updateAccount(req, res, next, req.params.id, key, req.body.credit);
+    },
     (req, res) => {
-      res.send(`id ${req.params.id} deposited succsesfully`);
+      res.send(`id ${req.params.id} updated succsesfully`);
     }
   );
-
-  async function withdrawFunc(req, res, next){
-    new ActionSchema({...req.body,actionType:"withdraw"})
-    next()
 }
-app.post(
-    "/api/actions/:id/withdraw",
-    withdrawFunc,
-    (req, res) => {
-      res.send(`id ${req.params.id} withdrawed succsesfully`);
-    }
+
+postFunc("credit");
+postFunc("active");
+
+async function depositFunc(req, res, next) {
+  new ActionSchema({ ...req.body, actionType: "deposit" });
+  await AccountSchema.findOneAndUpdate(
+    { id: req.body.account },
+    { cash: parseInt(req.body.amount) }
   );
+  next();
+}
+app.post("/api/actions/:id/deposit", depositFunc, (req, res) => {
+  res.send(`id ${req.params.id} deposited succsesfully`);
+});
+
+async function withdrawFunc(req, res, next) {
+  new ActionSchema({ ...req.body, actionType: "withdraw" });
+  next();
+}
+app.post("/api/actions/:id/withdraw", withdrawFunc, (req, res) => {
+  res.send(`id ${req.params.id} withdrawed succsesfully`);
+});
 console.log(mongoose.connection.readyState);
 
-app.listen(PORT)
+app.listen(PORT);
+

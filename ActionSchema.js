@@ -1,7 +1,5 @@
 const mongoose = require("mongoose");
 
-mongoose.connect("mongodb+srv://HW4mongo:HW4mongo@cluster0.w5jwo.mongodb.net/myFirstDatabase?retryWrites=true&w=majority")
-
 const today=()=>{
     const date= new Date()
     const day=date.getDate()

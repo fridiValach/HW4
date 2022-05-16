@@ -4,9 +4,10 @@ const AccountSchema = new mongoose.Schema({
     id: {
         type:String,
         required: [true, "no id"],
-        trim:true
+        trim:true,
+        unique:true
     },
-    credit :{
+        credit :{
         type: Number,
         min:0,
         default:0
